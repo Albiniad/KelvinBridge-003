@@ -1,0 +1,209 @@
+﻿@model BridgeModel
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Лабораторная работа</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <style>
+        .result-box {
+            border: 1px solid #ccc;
+            padding: 10px;
+            border-radius: 4px;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="row justify-content-center">
+        <div>
+            <h1 class="text-center">Определение малых сопротивлений с помощью моста Кельвина</h1>
+            <div class="form-group result-box">
+                <h6>Инструкция по работе:</h6>
+                <div class="form-group">
+                    <ol>
+                            <li>Обучающемуся предлагается выбрать 1 из 18 вариантов лабораторной работы, каждый вариант отличается значением малого сопротивления R0x и назначается преподавателем.</li>
+                            <li>Обучающийся может уменьшать или увеличивает значения резисторов Ra, Rm, Rn, RM, RN, чтобы значение показателя милливольтметра U стало как можно ближе к 0.</li>
+                            <li>После того как значение милливольтметра U стало максимально приближенным или равное 0, обучающийся нажимает кнопку "Измерить", чтобы проверить мост на уравновешенность.</li>
+                    </ol>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="variantSelect">Выберите вариант:</label>
+                <select class="form-control" id="variantSelect" onchange="selectVariant()">
+                    <option value="">Выберите вариант</option>
+                    @foreach (var variant in ViewBag.Variants)
+                    {
+                        <option data-r0x="@variant.R0x.ToString().Replace(",", ".")">@variant.VariantName</option>
+                    }
+                </select>
+            </div>
+
+            <div class="row">
+                    <div class="col-4">
+                        <div class="form-group result-box">
+                            <div class="form-group">
+                                <label asp-for="Ra">Магазин сопротивлений R<sub>a</sub>(0.1 - 500 Ом)</label>
+                                <div class="input-group">
+                                    <input asp-for="Ra" type="number" step="0.001" min="0.1" max="500" onblur="validateInput(this)" onchange="changeFields()" class="form-control">
+                                    <div class="input-group-append">
+                                        <span class="input-group-text">Ом</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label asp-for="Rm">Магазин сопротивлений R<sub>m</sub>(0.1 - 500 Ом)</label>
+                                <div class="input-group">
+                                    <input asp-for="Rm" type="number" step="0.001" min="0.1" max="500" onblur="validateInput(this)" onchange="changeFields()" class="form-control">
+                                    <div class="input-group-append">
+                                        <span class="input-group-text">Ом</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label asp-for="Rn">Магазин сопротивлений R<sub>n</sub>(0.1 - 500 Ом)</label>
+                                <div class="input-group">
+                                    <input asp-for="Rn" type="number" step="0.001" min="0.1" max="500" onblur="validateInput(this)" onchange="changeFields()" class="form-control">
+                                    <div class="input-group-append">
+                                        <span class="input-group-text">Ом</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label asp-for="RM">Магазин сопротивлений R<sub>M</sub>(0.1 - 500 Ом)</label>
+                                <div class="input-group">
+                                    <input asp-for="RM" type="number" step="0.001" min="0.1" max="500" onblur="validateInput(this)" onchange="changeFields()" class="form-control">
+                                    <div class="input-group-append">
+                                        <span class="input-group-text">Ом</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label asp-for="RN">Магазин сопротивлений R<sub>N</sub>(0.1 - 500 Ом)</label>
+                                <div class="input-group">
+                                    <input asp-for="RN" type="number" step="0.001" min="0.1" max="500" onblur="validateInput(this)" onchange="changeFields()" class="form-control">
+                                    <div class="input-group-append">
+                                        <span class="input-group-text">Ом</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                <div class="col-4">
+                    <img src="~/images/KelvinSvg.svg" alt="Image" class="img-fluid mt-4">
+                </div>
+                <div class="col-4">
+                    <div class="form-group result-box">
+                        <h6>Малое сопротивление</h6>
+                        <div class="form-group">
+                            <label asp-for="Rx">R<sub>x</sub></label>
+                            <div class="input-group">
+                                <input asp-for="Rx" type="number" step="0.001" class="form-control" readonly>
+                                <div class="input-group-append">
+                                    <span class="input-group-text">Ом</span>
+                                </div>
+                            </div>
+                        </div>
+                        <h6>Показания милливольтметра</h6>
+                            <div class="form-group">
+                                <label asp-for="U"></label>
+                                <div class="input-group">
+                                    <input asp-for="U" type="number" step="0.001" class="form-control" readonly>
+                                    <div class="input-group-append">
+                                        <span class="input-group-text">В</span>
+                                    </div>
+                                </div>
+                            </div>
+                        <div class="form-group" style="display: none;">
+                            <label asp-for="R0x">R<sub>0x</sub></label>
+                            <div class="input-group">
+                                <input asp-for="R0x" type="number" step="0.001" class="form-control" readonly>
+                                <div class="input-group-append">
+                                    <span class="input-group-text">Ом</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="text-center mt-4">
+                <div class="btn-group">
+                    <button onclick="check()" class="btn btn-primary" id="buttonResult">Измерить</button>
+                    <button onclick="resetFields()" class="btn btn-secondary">Сбросить</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div id="myModal" class="modal fade" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Ошибка</h5>
+            </div>
+            <div class="modal-body">
+                <p>Пожалуйста, заполните все поля!</p>
+            </div>
+            <div class="modal-footer">
+                    <button type="button" class="btn btn-danger" data-dismiss="modal" onclick="closeModal('myModal')">Закрыть</button>
+            </div>
+        </div>
+    </div>
+</div>
+<div id="kModal" class="modal fade" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Ошибка</h5>
+            </div>
+            <div class="modal-body">
+                <p>Мост неуравновешен!</p>
+            </div>
+            <div class="modal-footer">
+                    <button type="button" class="btn btn-danger" data-dismiss="modal" onclick="closeModal('kModal')">Закрыть</button>
+            </div>
+        </div>
+    </div>
+</div>
+<div id="variantSelectModal" class="modal fade" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Ошибка</h5>
+            </div>
+            <div class="modal-body">
+                <p>Выберите вариант!</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-danger" data-dismiss="modal" onclick="closeModal('variantSelectModal')">Закрыть</button>
+            </div>
+        </div>
+    </div>
+</div>
+    <div id="finishModal" class="modal fade" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Информация</h5>
+            </div>
+            <div class="modal-body">
+                <p>Мост успешно уравновешен!</p>
+            </div>
+            <div class="modal-footer">
+                    <button type="button" class="btn btn-success" data-dismiss="modal" onclick="closeModal('finishModal')">Закрыть</button>
+            </div>
+        </div>
+    </div>
+</div>
+<script src="~/lib/jquery/dist/jquery.min.js"></script>
+<script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+<script src="~/lib/js/site.js"></script>
+</body>
+</html>
